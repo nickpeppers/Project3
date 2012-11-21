@@ -8,7 +8,7 @@ namespace Project3
 {
     class Program
     {
-        private Stack<int> stack = new Stack<int>();
+        private Queue<int> queue = new Queue<int>();
         private int count = 0;
         private object locker = new object();
 
@@ -17,24 +17,24 @@ namespace Project3
 
         }
 
-        public void Push(int x)
+        public void Produce(int x)
         {
             lock (locker)
             {
-                stack.Push(x);
+                queue.Enqueue(x);
             }
         }
 
-        public int Pop()
+        public int Consume()
         {
             lock (locker)
             {
-                if (stack.Count == 0)
+                if (queue.Count == 0)
                 {
                     return -1;
                 }
 
-                return stack.Pop();
+                return queue.Dequeue();
             }
         }
 
@@ -44,7 +44,7 @@ namespace Project3
             {
                 Thread.Sleep(200);
 
-                Push(++count);
+                Produce(++count);
                 Console.WriteLine("Producer: " + count);
             }
         }
@@ -55,7 +55,7 @@ namespace Project3
             {
                 Thread.Sleep(100);
 
-                Console.WriteLine("Consumer: " + Pop());
+                Console.WriteLine("Consumer: " + Consume());
             }
         }
     }
