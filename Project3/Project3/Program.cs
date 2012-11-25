@@ -8,54 +8,82 @@ namespace Project3
 {
     class Program
     {
-        private Queue<int> queue = new Queue<int>();
-        private int count = 0;
-        private object locker = new object();
+        private const int BUFFER_MAX = 20;
+        private static Queue<int> buffer = new Queue<int>();
+        private static int count = 0;
+        private static object locker = new object();
 
         static void Main(string[] args)
         {
+            new Thread(Producer).Start();
 
+            new Thread(Consumer).Start();
         }
 
-        public void Produce(int x)
+        public static bool Produce(int x)
         {
+            // determines whether a thread can go into the block
             lock (locker)
             {
-                queue.Enqueue(x);
+                if (buffer.Count >= BUFFER_MAX)
+                {
+                    return false;
+                }
+
+                // adds the number produced to the buffer
+                buffer.Enqueue(x);
+                return true;
             }
         }
 
-        public int Consume()
+        public static int Consume()
         {
+            // determines whether a thread can go into the block
             lock (locker)
             {
-                if (queue.Count == 0)
+                if (buffer.Count == 0)
                 {
                     return -1;
                 }
 
-                return queue.Dequeue();
+                // removes number from the buffer
+                return buffer.Dequeue();
             }
         }
 
-        public void Producer()
+        public static void Producer()
         {
             while (true)
             {
+                // tells producer thread how long to wait
                 Thread.Sleep(200);
 
-                Produce(++count);
-                Console.WriteLine("Producer: " + count);
+                // adds to count to show the number produced
+                bool worked = Produce(++count);
+                if (!worked)
+                {
+                    // subtracts from count if queue is full to produce correct number
+                    count--;
+                }
+                // prints full if the buffer is full
+                string text = worked ? count.ToString() : "full";
+                // prints the number produced
+                Console.WriteLine("Producer: " + text);
             }
         }
 
-        public void Consumer()
+        public static void Consumer()
         {
             while (true)
             {
-                Thread.Sleep(100);
+                // tells consumer thread how long to wait
+                Thread.Sleep(1000);
 
-                Console.WriteLine("Consumer: " + Consume());
+                int result = Consume();
+                // prints empty if the the queue became empty
+                string text = result == -1 ? "empty" : result.ToString();
+                // prints the number consumed
+                Console.WriteLine("Consumer: " + text);
             }
         }
     }
